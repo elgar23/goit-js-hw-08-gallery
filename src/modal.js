@@ -1,105 +1,71 @@
 import defaultEl from './gallery-items.js';
-const ulRef = document.querySelector('.js-gallery');
-const divEl = document.querySelector('.js-lightbox');
-const btnEl = document.querySelector('button[data-action ="close-lightbox"]');
-const divModalEl = document.querySelector('.lightbox__content');
-const overEl = document.querySelector('.lightbox__overlay');
-const newStringEl = defaultEl.reduce((acc, { preview, description, original }) => {
-  return (acc += `<li class="gallery__item">
-  <a class="gallery__link" href="${original}" >
-  <img loading="lazy" class="gallery__image"
-  src="${preview}"
-  alt="${description}"
-  />
-  </a>
-  </li>`);
-}, '');
-ulRef.innerHTML = newStringEl;
 
-const imgEl = document.querySelector('.gallery__image');
 
-ulRef.addEventListener('click', e);     
+const galleryArray = defaultEl;
 
-    
+const galleryList = document.querySelector(".js-gallery");
 
-let element;
-function e(eve) {
-  eve.preventDefault();
-  if (eve.target.className !== imgEl.className) {
+const liRefs = galleryArray.map(({ ...galleryArray }) => {
+  const makeLi = document.createElement("li");
+  makeLi.classList.add("gallery__item");
+
+  const makeLink = document.createElement("a");
+  makeLink.classList.add("gallery__link");
+  makeLink.setAttribute("href", galleryArray.original);
+
+  const makeImg = document.createElement("img");
+  makeImg.classList.add("gallery__image");
+  makeImg.setAttribute("src", galleryArray.preview);
+  makeImg.setAttribute("data-source", galleryArray.original);
+  makeImg.setAttribute("alt", galleryArray.description);
+
+  makeLi.append(makeLink);
+  makeLink.append(makeImg);
+  return makeLi;
+});
+
+galleryList.append(...liRefs);
+
+const lightBoxRef = document.querySelector(".js-lightbox");
+const bigImg = document.querySelector(".lightbox__image");
+const closeLightboxBtn = document.querySelector(
+  'button[data-action="close-lightbox"]'
+);
+const lightboxOverley = document.querySelector(".lightbox__overlay");
+
+function galleryListHandler(event) {
+  event.preventDefault();
+  if (event.target.nodeName !== "IMG") {
     return;
   }
-  const bigImgEl = eve.target.alt;
-  for (let i = 0; i < defaultEl.length; i++) {
-    if (defaultEl[i].description === bigImgEl) {
-      element = defaultEl[i].original;
-    }
-  }
+  lightBoxRef.classList.add("is-open");
+  bigImg.setAttribute("src", event.target.dataset.source);
+  window.addEventListener("keydown", closeLightBoxByEsc);
+  lightboxOverley.addEventListener("click", closeLightBoxByClick);
+  closeLightboxBtn.addEventListener("click", closeLightBoxByBtn);
+}
 
-  divEl.classList.add('is-open');
-  divModalEl.innerHTML = `<img class="lightbox__image"
-    src="${element}"
-    alt="${bigImgEl}"
-  />`;
+function closeLightBoxByBtn() {
+  lightBoxRef.classList.remove("is-open");
+  bigImg.setAttribute("src", "");
+  window.removeEventListener("keydown", closeLightBoxByEsc);
+  lightboxOverley.removeEventListener("click", closeLightBoxByClick);
+  closeLightboxBtn.removeEventListener("click", closeLightBoxByBtn);
+}
+
+function closeLightBoxByEsc(event) {
+  if (event.code === "Escape") {
+    closeLightBoxByBtn();
+  }
+}
+
+function closeLightBoxByClick(event) {
+  if (event.target === event.currentTarget) {
+    closeLightBoxByBtn();
+  }
+}
+
   
-}
-
-
-btnEl.addEventListener('click', () => {
-  divEl.classList.remove('is-open');
-});
-
-// Очистка пути после закрытия модалки//
-
-function isOpen() {
-  const divCloseModal = document.querySelector('.lightbox__image');
-  divEl.classList.remove('is-open');
-  divCloseModal.alt = '';
-  divCloseModal.src = '';
-}
-const closeModalEl = document.querySelector('[data-action="close-lightbox"]');
-closeModalEl.addEventListener('click', isOpen);
-
-overEl.addEventListener('click', isOpen);
-
-// Управление кнопками //
-
-document.addEventListener('keydown', eve => {
-  const divCloseModal = document.querySelector('.lightbox__image');
-
-  // Кнопка Esc //
-  if (eve.code === 'Escape') {
-    isOpen()
-  }
-  if (divEl.className.includes('is-open')) {
-    const mapDefEl = defaultEl.map(value => value.original);
-    const indElNum = Number(mapDefEl.indexOf(divCloseModal.src));
-
-    // Кнопка влево, вверх //
-    const mapDelLight = Number(mapDefEl.length) - 1;
-    if (eve.code === 'ArrowLeft' || eve.code === 'ArrowUp') {
-      if (eve.target.className === imgEl.className) {
-        return;
-      }
-      const indLeftEl = indElNum - 1;
-      divCloseModal.src = mapDefEl[indLeftEl];
-      if (indElNum === 0) {
-        divCloseModal.src = mapDefEl[mapDelLight];
-      }
-    }
-    // Кнопка вправо, вниз //
-    if (
-      eve.code === 'ArrowRight' ||
-      eve.code === 'ArrowDown' ||
-      eve.code === 'Space'
-    ) {
-      if (eve.target.className === imgEl.className) {
-        return;
-      }
-      const indEl = indElNum + 1;
-      divCloseModal.src = mapDefEl[indEl];
-      if (indEl === mapDefEl.length) {
-        divCloseModal.src = mapDefEl[0];
-      }
-    }
-  }
-});
+    
+   
+galleryList.addEventListener("click", galleryListHandler);
